@@ -2,22 +2,324 @@
 <html>
     <head>
         <meta charset="UTF-8">
-        <meta http-equiv="content-type" content="text/html;charset=utf-8">
-        <meta name="post_status" content="published">
-        <meta name="post_date" content="2026-02-19">
-        <meta name="keywords" content="静态架构,防御性思考,软件工程">
-        <meta name="description" content="Author: Denman">
+        <meta http-equiv="content-type" 
+            content="text/html;charset=utf-8">
+        <meta name="viewport" 
+            content="width=device-width, initial-scale=1.0">
+        <title>Yet another blog in chaos</title>
 
-        <title>静态架构的防御性思考 - Denman Lab</title>
+        <link rel="stylesheet" 
+            id="water-stylesheet"
+            href="./assets/css/water-css/water.css">
+        
+        <script>
+        // 使用立即执行函数，防止变量泄露到全局 window 对象中
+        (function() {
+            try {
+                var savedUserTheme = localStorage.getItem('user-theme');
+                var stylesheetElement = 
+                    document.getElementById('water-stylesheet');
+                
+                // 根据持久化状态，在页面渲染前强行替换样式表引用
+                if (savedUserTheme === 'dark') {
+                    stylesheetElement.setAttribute(
+                        'href', 
+                        './assets/css/water-css/dark.css'
+                    );
+                } else if (savedUserTheme === 'light') {
+                    stylesheetElement.setAttribute(
+                        'href', 
+                        './assets/css/water-css/light.css'
+                    );
+                }
+            } catch (storageError) {
+                // 防御 Safari 无痕模式异常，静默失败，保留原生跟随系统功能
+                console.warn(
+                    '本地存储访问异常，主题自动回退到跟随系统模式：', 
+                    storageError
+                );
+            }
+        })();
+    </script>
+                
+        <style>
+            /** 流式排版 (Fluid Typography)
+             * 防御性考量：接管根元素，拒绝媒体查询的排版跳变
+             * 适配策略：在移动端与桌面端之间进行精确的线性平滑过渡
+             */
+            :root {
+                /* clamp(最小值, 首选计算值, 最大值) */
+                font-size: clamp(16px, 14px + 0.625vw, 20px);
+            }
+            /** 
+             * 复选框制作的汉堡菜单
+             */
+            /* 1. 隐藏复选框，但保留屏幕阅读器的无障碍访问能力 */
+            .menu-checkbox {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                padding: 0;
+                margin: -1px;
+                overflow: hidden;
+                clip: rect(0, 0, 0, 0);
+                white-space: nowrap;
+                border: 0;
+            }
+
+            /* 新增：粘性穹顶容器，顺应文档流并占据物理空间 */
+            .sticky-header {
+                position: sticky;
+                top: 0;
+                z-index: 990; /* 必须低于遮罩层，高于正文 */
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 15px 0;
+                /* 防御性：使用背景色遮挡底部滚动上来的文字内容 */
+                background-color: var(--background);
+                /* 增加下边距，为正文推开安全的呼吸空间 */
+                margin-bottom: 20px;
+            }
+
+            /* 2. 汉堡菜单按钮 (Label 绑定 Checkbox) */
+            .menu-button {
+                cursor: pointer;
+                padding: 10px;
+                /* 自动吸取 Water.css 内部的背景色变量，完美融入主题 */
+                background-color: var(--background); 
+                border-radius: 6px;
+                /* box-shadow: 0 2px 8px rgba(0,0,0,0.15); */
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+            }
+
+            /* 汉堡按钮的横线 */
+            .menu-line {
+                display: block;
+                width: 24px;
+                height: 3px;
+                background-color: var(--text-main);
+                transition: transform 0.3s ease, opacity 0.3s ease;
+            }
+
+            /* 3. 侧边栏主体 */
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: -280px; /* 初始状态安全地隐藏在屏幕左侧之外 */
+                width: 240px;
+                height: 100vh;
+                background-color: var(--background);
+                z-index: 999;
+                /* 平滑的贝塞尔曲线动画，提升物理交互质感 */
+                transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                padding: 80px 20px 20px 20px;
+                box-shadow: 2px 0 12px rgba(0,0,0,0.1);
+                overflow-y: auto;
+            }
+
+            /* 4. 遮罩层：防御用户在菜单打开时误触背后的主界面内容 */
+            .backdrop {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background: rgba(0, 0, 0, 0.4);
+                z-index: 998;
+                opacity: 0;
+                pointer-events: none; /* 隐藏时严格禁止所有点击交互 */
+                transition: opacity 0.3s ease;
+            }
+
+            /* 5. 状态机：复选框被选中 (checked) 时的连锁反应 */
+            
+            /* 展开侧边栏 */
+            .menu-checkbox:checked ~ .sidebar {
+                left: 0;
+            }
+
+            /* 显示并激活遮罩层 */
+            .menu-checkbox:checked ~ .backdrop {
+                opacity: 1;
+                pointer-events: auto; 
+            }
+
+            /* 汉堡菜单变身 X 形关闭按钮 */
+            .menu-checkbox:checked
+              ~ .sticky-header 
+              .menu-button .menu-line:nth-child(1) {
+                transform: translateY(9px) rotate(45deg);
+            }
+            .menu-checkbox:checked 
+              ~ .sticky-header 
+              .menu-button .menu-line:nth-child(2) {
+                opacity: 0;
+            }
+            .menu-checkbox:checked 
+              ~ .sticky-header 
+              .menu-button .menu-line:nth-child(3) {
+                transform: translateY(-9px) rotate(-45deg);
+            }
+
+            /* ---------------- 顶部控制区组合 ---------------- */
+            .header-controls {
+                display: flex;
+                align-items: center;
+                gap: 15px; /* 控制主题按钮和语言切换器的安全间距 */
+            }
+
+            /* ---------------- 语言切换器 ---------------- */
+            .language-switcher {
+                display: flex;
+                gap: 12px;
+                font-size: 0.9rem;
+            }
+
+            .language-switcher a {
+                color: var(--text-muted);
+                text-decoration: none;
+                transition: color 0.3s ease;
+                font-weight: normal;
+            }
+
+            .language-switcher a:hover {
+                color: var(--text-main);
+                text-decoration: underline;
+            }
+
+            /* 防御性：使用 aria-current 标识当前页，兼顾无障碍访问 */
+            .language-switcher a[aria-current="page"] {
+                color: var(--text-main);
+                font-weight: bold;
+                /* 防止用户无意义地疯狂点击当前语言导致页面重复刷新 */
+                pointer-events: none; 
+            }
+
+            /* ---------------- 右上角主题切换按钮 ---------------- */
+            .theme-toggle-button {
+                cursor: pointer;
+                padding: 8px 16px;
+                /* 提取 Water.css 原生变量以保证视觉和谐 */
+                background-color: var(--background);
+                color: var(--text-main);
+                border: 1px solid var(--text-muted);
+                border-radius: 6px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+                font-size: 0.9rem;
+                transition: background-color 0.3s ease;
+            }
+
+            .theme-toggle-button:hover {
+                background-color: var(--button-hover);
+            }
+        </style>
     </head>
     <body>
-        <nav class="sidebar-container">
-aaaaaaaaa
-        </nav>
-        <main class="content-wrapper">
-            <article class="post-body">
-				aaaaaaaaaaaaa
-            </article>
+        <!-- 汉堡菜单侧边栏内容 Start -->
+        <input type="checkbox" id="main-toggle" class="menu-checkbox" 
+           aria-label="切换侧边栏状态">
+
+        <label for="main-toggle" class="backdrop"></label>
+
+        <aside class="sidebar">
+            <nav>
+                <ul>
+                    <li><a href="#section-1">技术日志</a></li>
+                    <li><a href="#section-2">开源探索</a></li>
+                    <li><a href="#section-3">关于页面</a></li>
+                </ul>
+            </nav>
+        </aside>
+        <!-- 汉堡菜单侧边栏内容 End -->
+
+        <!-- 粘性穹顶：顺应文档流，悬停在顶部，防止遮挡 main -->
+        <header class="sticky-header">
+            <!-- 汉堡菜单按钮转移至此 -->
+            <label for="main-toggle" class="menu-button">
+                <span class="menu-line"></span>
+                <span class="menu-line"></span>
+                <span class="menu-line"></span>
+            </label>
+
+            <div class="header-controls">
+                
+                <!-- 硬核多文件流：语言切换占位符 -->
+                <nav class="language-switcher" aria-label="语言切换">
+                    <!-- 加上 aria-current="page" 激活当前语言高亮 -->
+                    <a href="./index.html" aria-current="page">ZH</a>
+                    <a href="#./index_en.html">EN</a>
+                    <a href="#./index_jp.html">JP</a>
+                </nav>
+
+                <!-- 主题切换按钮转移至此 -->
+                <button id="theme-toggle-action" class="theme-toggle-button">
+                    Light/Dark
+                </button>
+            </div>
+        </header>
+
+        <main data-editable data-name="main-content">
+            <h1>示例草稿</h1>
+            <p>这里是一个完全拥抱 Water.css 的极简空间。</p>
+            <p>
+                我们在不破坏原有单列居中布局的前提下，
+                引入了一个安全、高防御且兼容移动端的侧边悬浮菜单。
+            </p>
+            <p>请尝试点击左上角的汉堡菜单来验证其坚固性。</p>
         </main>
+
+        <script src="./assets/js/import_contenttools.js"></script>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var actionButton = 
+                    document.getElementById('theme-toggle-action');
+                var stylesheetReference = 
+                    document.getElementById('water-stylesheet');
+                
+                if (!actionButton || !stylesheetReference) {
+                    // 防御性拦截：如果未来 HTML 结构被破坏，立即终止执行
+                    return;
+                }
+
+                actionButton.addEventListener('click', function() {
+                    var currentStylesheetHref = 
+                        stylesheetReference.getAttribute('href');
+                    
+                    var targetThemeType = 'light';
+                    var targetStylesheetHref = 
+                        './assets/css/water-css/light.css';
+
+                    // 兼容性极强的状态判断
+                    if (
+                        currentStylesheetHref.indexOf('water.css') > -1 || 
+                        currentStylesheetHref.indexOf('light.css') > -1
+                    ) {
+                        targetThemeType = 'dark';
+                        targetStylesheetHref = 
+                            './assets/css/water-css/dark.css';
+                    }
+
+                    // 注入新主题
+                    stylesheetReference.setAttribute(
+                        'href', 
+                        targetStylesheetHref
+                    );
+
+                    // 同步持久化存储
+                    try {
+                        localStorage.setItem('user-theme', targetThemeType);
+                    } catch (saveError) {
+                        console.warn(
+                            '无法将主题偏好写入本地存储：', 
+                            saveError
+                        );
+                    }
+                });
+            });
+        </script>
     </body>
 </html>
