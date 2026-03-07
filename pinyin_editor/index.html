@@ -342,7 +342,7 @@ document.addEventListener("DOMContentLoaded", function() {
         // 1. Construct and inject the copy button
         const copyBtn = document.createElement('button');
         copyBtn.className = 'b-copy-trigger';
-        copyBtn.innerText = '复制汉字';
+        copyBtn.innerText = 'Copy';
         copyBtn.setAttribute('aria-label', 'Copy Chinese text without Pinyin');
         container.appendChild(copyBtn);
 
@@ -367,7 +367,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 navigator.clipboard.writeText(cleanText).then(function() {
                     // Visual feedback
                     const originalText = copyBtn.innerText;
-                    copyBtn.innerText = '已复制!';
+                    copyBtn.innerText = 'Copied!';
                     copyBtn.classList.add('b-copied-state');
                     
                     setTimeout(function() {
