@@ -60,7 +60,7 @@
 
         .controls {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 15px;
             margin-bottom: 20px;
             padding: 15px;
@@ -159,8 +159,13 @@
         </div>
         <div class="control-group">
             <label for="cssRubyRatio">Pinyin Size Ratio (em)</label>
-            <input type="range" id="cssRubyRatio" min="0.3" max="1" step="0.1" value="0.6">
-            <span id="valRubyRatio" style="font-size: 12px;">0.6em</span>
+            <input type="range" id="cssRubyRatio" min="0.3" max="1" step="0.1" value="0.8">
+            <span id="valRubyRatio" style="font-size: 12px;">0.8em</span>
+        </div>
+        <div class="control-group">
+            <label for="cssRubyMargin">Pinyin Bottom Margin (px)</label>
+            <input type="range" id="cssRubyMargin" min="0" max="40" value="10">
+            <span id="valRubyMargin" style="font-size: 12px;">10px</span>
         </div>
         <div class="control-group">
             <label for="cssColorText">Text Color</label>
@@ -216,12 +221,14 @@
             controls: {
                 fontSize: document.getElementById('cssFontSize'),
                 rubyRatio: document.getElementById('cssRubyRatio'),
+                rubyMargin: document.getElementById('cssRubyMargin'),
                 colorText: document.getElementById('cssColorText'),
                 colorRuby: document.getElementById('cssColorRuby')
             },
             labels: {
                 fontSize: document.getElementById('valFontSize'),
-                rubyRatio: document.getElementById('valRubyRatio')
+                rubyRatio: document.getElementById('valRubyRatio'),
+                rubyMargin: document.getElementById('valRubyMargin')
             }
         };
 
@@ -233,6 +240,7 @@
         function generateCSS() {
             const size = elements.controls.fontSize.value;
             const ratio = elements.controls.rubyRatio.value;
+            const margin = elements.controls.rubyMargin.value;
             const textColor = elements.controls.colorText.value;
             const rubyColor = elements.controls.colorRuby.value;
 
@@ -251,13 +259,14 @@
 }
 .b-ruby-text ruby {
     ruby-align: center;
-    margin: 0 2px;
+    margin: 0 4px;
 }
 .b-ruby-text rt {
     font-family: Arial, sans-serif;
     font-size: ${ratio}em;
     color: ${rubyColor};
     ruby-position: over;
+    margin-bottom: ${margin}px;
 }
 </style>`.trim();
         }
@@ -276,7 +285,6 @@
                 elements.preview.innerHTML = 
                         '<span style="color: red; font-weight: bold;">' +
                         'Error: pinyin-pro library not loaded. ' +
-                        'Check internet connection.' +
                         '</span>';
                     return;
             }
@@ -377,6 +385,10 @@
                 if (key === 'rubyRatio') {
                     elements.labels.rubyRatio.textContent = 
                         elements.controls[key].value + 'em';
+                }
+                if (key === 'rubyMargin') {
+                    elements.labels.rubyMargin.textContent =
+                        elements.controls[key].value + 'px';
                 }
                 // Trigger re-render
                 processContent();
