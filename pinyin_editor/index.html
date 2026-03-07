@@ -470,7 +470,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
             const copyBtn = document.createElement('button');
             copyBtn.className = 'b-copy-trigger';
-            copyBtn.innerText = '复制汉字';
+            copyBtn.innerText = 'Copy';
             container.appendChild(copyBtn);
 
             copyBtn.addEventListener('click', function(event) {
@@ -484,7 +484,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 if (navigator.clipboard) {
                     navigator.clipboard.writeText(cleanText).then(() => {
                         const originalText = copyBtn.innerText;
-                        copyBtn.innerText = '已复制!';
+                        copyBtn.innerText = 'Copied!';
                         copyBtn.classList.add('b-copied-state');
                         setTimeout(() => {
                             copyBtn.innerText = originalText;
