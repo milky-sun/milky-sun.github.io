@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blogger Pinyin Editor - Dark Noise</title>
+    <script src="https://unpkg.com/pinyin-pro"></script>
+    
+    <style>
+        /* * Editor UI Styles - Based on Blogger 'Dark Noise' Theme 
+         */
+        :root {
+            --bg-main: #1a1a1a;
+            --bg-panel: #2b2b2b;
+            --text-main: #ffffff;
+            --text-muted: #cccccc;
+            --accent: #ff7357;
+            --success: #2e7d32;
+            --border: #444444;
+            --font-stack: -apple-system, BlinkMacSystemFont, 'Segoe UI', 
+                          Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            font-family: var(--font-stack);
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        h1, h2, h3 {
+            color: var(--text-main);
+            font-weight: 700;
+        }
+
+        .header {
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .layout-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 968px) {
+            .layout-grid { grid-template-columns: 1fr; }
+        }
+
+        .panel {
+            background-color: var(--bg-panel);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: var(--bg-main);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .control-group label {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+
+        .control-group input[type="range"] {
+            accent-color: var(--accent);
+        }
+
+        textarea {
+            width: 100%;
+            height: 250px;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 14px;
+            resize: vertical;
+            box-sizing: border-box;
+            white-space: pre-wrap; /* Preserve spaces in textarea visually */
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .preview-container {
+            min-height: 250px;
+            background-color: var(--bg-main);
+            border: 1px dashed var(--border);
+            border-radius: 4px;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        button {
+            background-color: var(--accent);
+            color: #1a1a1a;
+            border: none;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+            margin-top: 10px;
+            text-transform: uppercase;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .output-box {
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Blogger Pinyin Editor (Dark Noise)</h1>
+        <p style="color: var(--text-muted);">
+            Type Chinese characters below. Formatting and empty lines are 
+            strictly preserved. Adjust CSS visually.
+        </p>
+    </div>
+
+    <div class="panel controls">
+        <div class="control-group">
+            <label for="cssFontSize">Base Font Size (px)</label>
+            <input type="range" id="cssFontSize" min="16" max="48" value="24">
+            <span id="valFontSize" style="font-size: 12px;">24px</span>
+        </div>
+        <div class="control-group">
+            <label for="cssRubyRatio">Pinyin Size Ratio (em)</label>
+            <input type="range" id="cssRubyRatio" min="0.3" max="1" step="0.1" value="0.6">
+            <span id="valRubyRatio" style="font-size: 12px;">0.6em</span>
+        </div>
+        <div class="control-group">
+            <label for="cssColorText">Text Color</label>
+            <input type="color" id="cssColorText" value="#ffffff">
+        </div>
+        <div class="control-group">
+            <label for="cssColorRuby">Pinyin Color</label>
+            <input type="color" id="cssColorRuby" value="#cccccc">
+        </div>
+    </div>
+
+    <div class="layout-grid">
+        <div class="panel">
+            <h2>Source Text</h2>
+            <textarea id="sourceInput" placeholder="输入中文内容，支持多行，回车将被保留..."></textarea>
+        </div>
+
+        <div class="panel">
+            <h2>Live Preview</h2>
+            <div id="previewArea" class="preview-container"></div>
+        </div>
+    </div>
+
+    <div class="layout-grid" style="margin-top: 20px;">
+        <div class="panel">
+            <h2>Generated CSS</h2>
+            <p style="font-size: 12px; color: var(--text-muted);">
+                Paste this into your Blogger Theme HTML just once.
+            </p>
+            <textarea id="cssOutput" readonly style="height: 120px;"></textarea>
+            <button onclick="copyToClipboard('cssOutput', this)">Copy CSS</button>
+        </div>
+
+        <div class="panel">
+            <h2>Generated HTML</h2>
+            <p style="font-size: 12px; color: var(--text-muted);">
+                Paste this into the Blogger HTML View for your post.
+            </p>
+            <textarea id="htmlOutput" readonly style="height: 120px;"></textarea>
+            <button onclick="copyToClipboard('htmlOutput', this)">Copy HTML</button>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * State management for DOM elements.
+         */
+        const elements = {
+            input: document.getElementById('sourceInput'),
+            preview: document.getElementById('previewArea'),
+            htmlOut: document.getElementById('htmlOutput'),
+            cssOut: document.getElementById('cssOutput'),
+            controls: {
+                fontSize: document.getElementById('cssFontSize'),
+                rubyRatio: document.getElementById('cssRubyRatio'),
+                colorText: document.getElementById('cssColorText'),
+                colorRuby: document.getElementById('cssColorRuby')
+            },
+            labels: {
+                fontSize: document.getElementById('valFontSize'),
+                rubyRatio: document.getElementById('valRubyRatio')
+            }
+        };
+
+        /**
+         * Generates the isolated CSS string based on user controls.
+         * Enforces strict scoping (.b-ruby-text) to avoid polluting Blogger.
+         * @returns {string} Formatted CSS block.
+         */
+        function generateCSS() {
+            const size = elements.controls.fontSize.value;
+            const ratio = elements.controls.rubyRatio.value;
+            const textColor = elements.controls.colorText.value;
+            const rubyColor = elements.controls.colorRuby.value;
+
+            return `
+<style>
+/* Blogger Pinyin Ruby Typography */
+.b-ruby-text {
+    font-family: "KaiTi", "STKaiti", serif;
+    font-size: ${size}px;
+    line-height: 2.5;
+    color: ${textColor};
+    margin-bottom: 20px;
+}
+.b-ruby-text p {
+    margin: 0 0 1em 0;
+}
+.b-ruby-text ruby {
+    ruby-align: center;
+    margin: 0 2px;
+}
+.b-ruby-text rt {
+    font-family: Arial, sans-serif;
+    font-size: ${ratio}em;
+    color: ${rubyColor};
+    ruby-position: over;
+}
+</style>`.trim();
+        }
+
+        /**
+         * Processes the input text, generating HTML via pinyin-pro.
+         * Preserves newlines and wraps valid text blocks in <p> tags.
+         * Defensive check: ensure pinyinPro is loaded and catch runtime errors.
+         * Features a Post-Processing Pipeline to clean intrusive <span> tags
+         * and strictly format output to "one ruby per line" for source readability.
+         */
+        function processContent() {
+            try {
+                // Defensive check for external dependency
+            if (typeof pinyinPro === 'undefined') {
+                elements.preview.innerHTML = 
+                        '<span style="color: red; font-weight: bold;">' +
+                        'Error: pinyin-pro library not loaded. ' +
+                        'Check internet connection.' +
+                        '</span>';
+                    return;
+            }
+
+            const rawText = elements.input.value;
+            if (!rawText) {
+                elements.preview.innerHTML = '';
+                elements.htmlOut.value = '';
+                return;
+            }
+
+            // Split by standard newline character to preserve exact formatting
+            const lines = rawText.split('\n');
+            let finalHtml = '<div class="b-ruby-text">\n';
+
+            lines.forEach(line => {
+                // Preserve empty lines visually for the Blogger output
+                if (!line.trim()) {
+                    finalHtml += '  <br>\n';
+                    return;
+                }
+
+                // 1. Get raw, span-polluted HTML from pinyin-pro
+                    let rawHtml = pinyinPro.html(line, { nonPinyin: 'pass' });
+
+                    // 2. Strip ALL <span> tags entirely (opening and closing)
+                    let cleanHtml = rawHtml.replace(/<\/?span[^>]*>/g, '');
+
+                    // 3. Clean <rt> tags, remove internal classes, AND inject <rp> fallback tags
+                    // Matches <rt class="...">pinyin</rt> and replaces with <rp>(</rp><rt>pinyin</rt><rp>)</rp>
+                    cleanHtml = cleanHtml.replace(/<rt[^>]*>/g, '<rt>');
+
+                    // 4. Force a newline and 4 spaces indentation before EVERY <ruby> tag
+                    cleanHtml = cleanHtml.replace(/<ruby>/g, '\n    <ruby>');
+
+                    // 5. Wrap the processed line in <p> tags with proper closing indentation
+                    finalHtml += `  <p>${cleanHtml}\n  </p>\n`;
+            });
+
+            finalHtml += '</div>';
+
+            const cssBlock = generateCSS();
+
+            // Update DOM elements safely
+            elements.cssOut.value = cssBlock;
+            elements.htmlOut.value = finalHtml;
+            
+            // Inject into preview (CSS + HTML)
+            elements.preview.innerHTML = cssBlock + finalHtml;
+
+            } catch (error) {
+                // Do not swallow errors; expose them directly to the user
+                console.error("Execution Error:", error);
+                elements.preview.innerHTML = 
+                    `<span style="color: red;">Error: ${error.message}</span>`;
+            }
+        }
+
+        /**
+         * Copies the content of a target textarea to the clipboard.
+         * Utilizes Modern Clipboard API with visual feedback.
+         * @param {string} targetId - ID of the textarea to copy from.
+         * @param {HTMLElement} buttonElement - The button that triggered the action.
+         */
+        function copyToClipboard(targetId, buttonElement) {
+            const textToCopy = document.getElementById(targetId).value;
+            if (!textToCopy) {
+                return;
+            }
+
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const originalText = buttonElement.innerText;
+                buttonElement.innerText = 'Copied!';
+                buttonElement.classList.add('btn-success');
+                
+                setTimeout(() => {
+                    buttonElement.innerText = originalText;
+                    buttonElement.classList.remove('btn-success');
+                }, 2000);
+            }).catch(error => {
+                console.error('Failed to copy code: ', error);
+            });
+        }
+
+        /**
+         * Event Listeners Binding
+         */
+        elements.input.addEventListener('input', processContent);
+
+        // Bind control listeners to update CSS and Live Preview instantly
+        Object.keys(elements.controls).forEach(key => {
+            elements.controls[key].addEventListener('input', () => {
+                // Update numerical indicator labels on the UI
+                if (key === 'fontSize') {
+                    elements.labels.fontSize.textContent = 
+                        elements.controls[key].value + 'px';
+                }
+                if (key === 'rubyRatio') {
+                    elements.labels.rubyRatio.textContent = 
+                        elements.controls[key].value + 'em';
+                }
+                // Trigger re-render
+                processContent();
+            });
+        });
+
+        // Initial render to populate CSS textareas on page load
+        elements.cssOut.value = generateCSS();
+
+        if (!window.pinyinPro) {
+            console.warn('pinyin-pro加载超时或失败，正在切换至3.28版本的本地离线库...');
+            document.write('<script src="./assets/pinyin-pro-3-28.js"><\/script>');
+        }
+    </script>
+</body>
+</html>
