@@ -7,8 +7,6 @@
     <script src="https://unpkg.com/pinyin-pro"></script>
     
     <style>
-        /* * Editor UI Styles - Based on Blogger 'Dark Noise' Theme 
-         */
         :root {
             --bg-main: #1a1a1a;
             --bg-panel: #2b2b2b;
@@ -44,6 +42,13 @@
         .layout-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        /* Update to 3 columns for the bottom section to fit the new JS output */
+        .layout-grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 20px;
         }
 
@@ -96,7 +101,7 @@
             font-size: 14px;
             resize: vertical;
             box-sizing: border-box;
-            white-space: pre-wrap; /* Preserve spaces in textarea visually */
+            white-space: pre-wrap;
         }
 
         textarea:focus {
@@ -189,22 +194,31 @@
         </div>
     </div>
 
-    <div class="layout-grid" style="margin-top: 20px;">
+    <div class="layout-grid-3" style="margin-top: 20px;">
         <div class="panel">
-            <h2>Generated CSS</h2>
+            <h2>1. Generated CSS</h2>
             <p style="font-size: 12px; color: var(--text-muted);">
-                Paste this into your Blogger Theme HTML just once.
+                Paste into Blogger Theme HTML (between &lt;head&gt; tags).
             </p>
-            <textarea id="cssOutput" readonly style="height: 120px;"></textarea>
+            <textarea id="cssOutput" readonly style="height: 150px;"></textarea>
             <button onclick="copyToClipboard('cssOutput', this)">Copy CSS</button>
         </div>
 
         <div class="panel">
-            <h2>Generated HTML</h2>
+            <h2>2. Blogger Script</h2>
             <p style="font-size: 12px; color: var(--text-muted);">
-                Paste this into the Blogger HTML View for your post.
+                Paste into Blogger Theme HTML (just before &lt;/body&gt;).
             </p>
-            <textarea id="htmlOutput" readonly style="height: 120px;"></textarea>
+            <textarea id="scriptOutput" readonly style="height: 150px;"></textarea>
+            <button onclick="copyToClipboard('scriptOutput', this)">Copy JS</button>
+        </div>
+
+        <div class="panel">
+            <h2>3. Generated HTML</h2>
+            <p style="font-size: 12px; color: var(--text-muted);">
+                Paste into the Blogger HTML View for your specific post.
+            </p>
+            <textarea id="htmlOutput" readonly style="height: 150px;"></textarea>
             <button onclick="copyToClipboard('htmlOutput', this)">Copy HTML</button>
         </div>
     </div>
@@ -218,6 +232,7 @@
             preview: document.getElementById('previewArea'),
             htmlOut: document.getElementById('htmlOutput'),
             cssOut: document.getElementById('cssOutput'),
+            scriptOut: document.getElementById('scriptOutput'),
             controls: {
                 fontSize: document.getElementById('cssFontSize'),
                 rubyRatio: document.getElementById('cssRubyRatio'),
@@ -234,7 +249,7 @@
 
         /**
          * Generates the isolated CSS string based on user controls.
-         * Enforces strict scoping (.b-ruby-text) to avoid polluting Blogger.
+         * Enforces strict scoping (.b-ruby-text) and includes hover/copy UI states.
          * @returns {string} Formatted CSS block.
          */
         function generateCSS() {
@@ -246,13 +261,21 @@
 
             return `
 <style>
-/* Blogger Pinyin Ruby Typography */
+/* Blogger Pinyin Ruby Typography & Interactive Styles */
 .b-ruby-text {
     font-family: "KaiTi", "STKaiti", serif;
     font-size: ${size}px;
     line-height: 2.5;
     color: ${textColor};
     margin-bottom: 20px;
+        position: relative;
+    padding: 15px;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+}
+/* Light background annotation on hover for Dark Theme */
+.b-ruby-text:hover {
+    background-color: rgba(255, 255, 255, 0.08); 
 }
 .b-ruby-text p {
     margin: 0 0 1em 0;
@@ -268,15 +291,103 @@
     ruby-position: over;
     margin-bottom: ${margin}px;
 }
+    /* Floating Copy Button Styling */
+.b-copy-trigger {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-5px);
+    transition: all 0.3s ease;
+    background-color: #ff7357;
+    color: #1a1a1a;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+.b-ruby-text:hover .b-copy-trigger {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+.b-copy-trigger.b-copied-state {
+    background-color: #2e7d32;
+    color: #ffffff;
+}
 </style>`.trim();
         }
 
         /**
+         * Generates the client-side JavaScript for the Blogger template.
+         * This script defensively extracts text without pinyin elements.
+         * @returns {string} Formatted JavaScript block.
+         */
+        function generateBloggerScript() {
+            return `
+<script>
+/**
+ * Blogger Pinyin Reader Utility
+ * Automatically injects a copy button into ruby text containers 
+ * and handles pure Chinese character extraction (stripping pinyin).
+ */
+document.addEventListener("DOMContentLoaded", function() {
+    const rubyContainers = document.querySelectorAll('.b-ruby-text');
+    
+    rubyContainers.forEach(function(container) {
+        // 1. Construct and inject the copy button
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'b-copy-trigger';
+        copyBtn.innerText = '复制汉字';
+        copyBtn.setAttribute('aria-label', 'Copy Chinese text without Pinyin');
+        container.appendChild(copyBtn);
+
+        // 2. Bind Clipboard extraction logic
+        copyBtn.addEventListener('click', function(event) {
+            event.preventDefault();
+            
+            // Defensive pattern: clone node to avoid mutating the live DOM
+            const containerClone = container.cloneNode(true);
+            
+            // Remove all pinyin specific tags (<rt>, <rp>) and the injected button
+            const elementsToStrip = containerClone.querySelectorAll('rt, rp, .b-copy-trigger');
+            elementsToStrip.forEach(function(el) {
+                el.remove();
+            });
+            
+            // Extract the cleaned inner text
+            const cleanText = containerClone.innerText.trim();
+            
+            // Modern Clipboard API with fallback warning
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(cleanText).then(function() {
+                    // Visual feedback
+                    const originalText = copyBtn.innerText;
+                    copyBtn.innerText = '已复制!';
+                    copyBtn.classList.add('b-copied-state');
+                    
+                    setTimeout(function() {
+                        copyBtn.innerText = originalText;
+                        copyBtn.classList.remove('b-copied-state');
+                    }, 2000);
+                }).catch(function(err) {
+                    console.error("Blogger Pinyin Editor: Clipboard write failed.", err);
+                });
+            } else {
+                console.warn("Clipboard API is unavailable. Requires HTTPS.");
+            }
+        });
+    });
+});
+<\/script>`.trim();
+        }
+
+        /**
          * Processes the input text, generating HTML via pinyin-pro.
-         * Preserves newlines and wraps valid text blocks in <p> tags.
-         * Defensive check: ensure pinyinPro is loaded and catch runtime errors.
-         * Features a Post-Processing Pipeline to clean intrusive <span> tags
-         * and strictly format output to "one ruby per line" for source readability.
          */
         function processContent() {
             try {
@@ -327,13 +438,19 @@
             finalHtml += '</div>';
 
             const cssBlock = generateCSS();
+            const scriptBlock = generateBloggerScript();
 
-            // Update DOM elements safely
+            // Update Output Textareas
             elements.cssOut.value = cssBlock;
+            elements.scriptOut.value = scriptBlock;
             elements.htmlOut.value = finalHtml;
             
-            // Inject into preview (CSS + HTML)
+            // Live Preview Assembly (Note: Wait for DOM parse to execute JS in preview)
             elements.preview.innerHTML = cssBlock + finalHtml;
+
+            // Re-trigger the injected Blogger script logic specifically for the preview area
+                // since the innerHTML assignment above doesn't execute <script> tags.
+                simulateBloggerEnvironment(elements.preview);
 
             } catch (error) {
                 // Do not swallow errors; expose them directly to the user
@@ -344,10 +461,42 @@
         }
 
         /**
-         * Copies the content of a target textarea to the clipboard.
-         * Utilizes Modern Clipboard API with visual feedback.
-         * @param {string} targetId - ID of the textarea to copy from.
-         * @param {HTMLElement} buttonElement - The button that triggered the action.
+         * Safely simulates the Blogger DOMContentLoaded logic inside the Live Preview.
+         * This avoids using eval() or messy script tag injection logic for safety.
+         */
+        function simulateBloggerEnvironment(previewContext) {
+            const container = previewContext.querySelector('.b-ruby-text');
+            if (!container) return;
+
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'b-copy-trigger';
+            copyBtn.innerText = '复制汉字';
+            container.appendChild(copyBtn);
+
+            copyBtn.addEventListener('click', function(event) {
+                event.preventDefault();
+                const containerClone = container.cloneNode(true);
+                const elementsToStrip = containerClone.querySelectorAll('rt, rp, .b-copy-trigger');
+                elementsToStrip.forEach(el => el.remove());
+                
+                const cleanText = containerClone.innerText.trim();
+                
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(cleanText).then(() => {
+                        const originalText = copyBtn.innerText;
+                        copyBtn.innerText = '已复制!';
+                        copyBtn.classList.add('b-copied-state');
+                        setTimeout(() => {
+                            copyBtn.innerText = originalText;
+                            copyBtn.classList.remove('b-copied-state');
+                        }, 2000);
+                    });
+                }
+            });
+        }
+
+        /**
+         * General Clipboard Utility for the Editor UI Buttons
          */
         function copyToClipboard(targetId, buttonElement) {
             const textToCopy = document.getElementById(targetId).value;
@@ -395,8 +544,9 @@
             });
         });
 
-        // Initial render to populate CSS textareas on page load
+        // Initial Layout Population
         elements.cssOut.value = generateCSS();
+        elements.scriptOut.value = generateBloggerScript();
 
         if (!window.pinyinPro) {
             console.warn('pinyin-pro加载超时或失败，正在切换至3.28版本的本地离线库...');
