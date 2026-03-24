@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>白露文庫 | 古典籍と良書に出会う小さな古書店</title>
+    <!-- Tailwind CSS (スタイリング用) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: 落ち着いた明朝体「しっぽり明朝」を読み込み -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'washi': '#FAFAF8', // 和紙のような背景色
+                        'sumi': '#2C2C2C',  // 墨のような文字色
+                        'shiratsuyu': '#A1B4B1', // 白露をイメージしたアクセントカラー
+                    },
+                    fontFamily: {
+                        'serif': ['"Shippori Mincho"', '"Noto Serif JP"', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: theme('colors.washi');
+            color: theme('colors.sumi');
+            font-family: theme('fontFamily.serif');
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        /* 縦書き用のユーティリティクラス */
+        .vertical-text {
+            writing-mode: vertical-rl;
+            text-orientation: upright;
+            line-height: 2.5;
+        }
+
+        /* スクロール時のフワッと表示アニメーション */
+        .fade-in-section {
+            opacity: 0;
+            transform: translateY(20px);
+            visibility: hidden;
+            transition: opacity 1s ease-out, transform 1s ease-out;
+            will-change: opacity, visibility;
+        }
+        .fade-in-section.is-visible {
+            opacity: 1;
+            transform: none;
+            visibility: visible;
+        }
+
+        /* スムーススクロール */
+        html {
+            scroll-behavior: smooth;
+        }
+    </style>
+</head>
+<body class="leading-relaxed">
+
+    <!-- ナビゲーション -->
+    <nav class="fixed w-full z-50 bg-washi/90 backdrop-blur-sm border-b border-gray-200 transition-all duration-300">
+        <div class="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="#" class="text-xl font-semibold tracking-widest text-sumi">白露文庫</a>
+            <div class="hidden md:flex space-x-8 text-sm tracking-widest">
+                <a href="#about" class="hover:text-shiratsuyu transition-colors duration-300">ごあいさつ</a>
+                <a href="#concept" class="hover:text-shiratsuyu transition-colors duration-300">名前の由来</a>
+                <a href="#note" class="hover:text-shiratsuyu transition-colors duration-300">Note</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ヒーローセクション（トップ画面） -->
+    <header class="relative min-h-screen flex items-center justify-center overflow-hidden">
+        <!-- 背景画像（うっすらと白露や秋の野を思わせる画像） -->
+        <div class="absolute inset-0 z-0">
+            <img src="https://images.unsplash.com/photo-1508514177221-188b1cfa4ffa?auto=format&fit=crop&q=80&w=2000" alt="秋の野と露" class="w-full h-full object-cover opacity-30" />
+            <div class="absolute inset-0 bg-gradient-to-b from-washi/80 via-washi/90 to-washi"></div>
+        </div>
+        
+        <div class="relative z-10 text-center flex flex-col items-center">
+            <p class="text-sm md:text-base tracking-[0.3em] text-gray-500 mb-8 fade-in-section is-visible" style="animation-delay: 0.2s;">
+                思いがけぬ発見や、心潤す言葉との出会いを。
+            </p>
+            <h1 class="text-5xl md:text-7xl font-semibold tracking-widest mb-12 text-sumi fade-in-section is-visible" style="animation-delay: 0.5s;">
+                白露文庫
+            </h1>
+            <!-- 縦書きのキャッチコピー -->
+            <div class="vertical-text h-48 md:h-64 text-lg md:text-xl text-gray-700 tracking-widest fade-in-section is-visible" style="animation-delay: 0.8s;">
+                <p>静かに知を支える、小さな古書店</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- ごあいさつセクション -->
+    <section id="about" class="py-24 md:py-32 px-6">
+        <div class="max-w-4xl mx-auto">
+            <h2 class="text-2xl md:text-3xl font-semibold tracking-widest text-center mb-16 fade-in-section">ごあいさつ</h2>
+            
+            <div class="flex flex-col md:flex-row gap-12 items-center">
+                <div class="w-full md:w-1/2 fade-in-section">
+                    <img src="https://images.unsplash.com/photo-1524578939433-c15c58a8f110?auto=format&fit=crop&q=80&w=1000" alt="古い本" class="w-full aspect-square object-cover rounded-sm shadow-md" />
+                </div>
+                <div class="w-full md:w-1/2 space-y-6 text-base md:text-lg leading-loose text-gray-700 fade-in-section">
+                    <p>はじめまして、白露文庫です。</p>
+                    <p>まだ始めたばかりの小さな古書店ですが、様々な知識へのときめきや、心潤す言葉との出会いを、静かに支えることができたらと思っています。</p>
+                    <p>私が育った地方では、図書館の蔵書にも限りがあり、「知りえること」には限界がありました。大学に進学し、大きな図書館を訪れた時に知った地域間の「知の格差」。</p>
+                    <p>「より深く知りたい」「もっとたくさんの良書に出会いたい」——そんな人たちの心が満たせるような古書店を開きたいというのが、白露文庫の大きな目標の一つです。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 名前の由来セクション -->
+    <section id="concept" class="py-24 md:py-32 px-6 bg-gray-100/50">
+        <div class="max-w-4xl mx-auto text-center">
+            <h2 class="text-2xl md:text-3xl font-semibold tracking-widest mb-16 fade-in-section">白露文庫の由来</h2>
+            
+            <div class="mb-12 fade-in-section">
+                <p class="text-xl md:text-2xl leading-loose tracking-widest font-medium text-sumi">
+                    白露に風の吹きしく秋の野は<br>
+                    つらぬきとめぬ玉ぞ散りける
+                </p>
+                <p class="text-sm tracking-widest text-gray-500 mt-4">文屋朝康 （百人一首）</p>
+            </div>
+
+            <div class="max-w-2xl mx-auto space-y-6 text-base md:text-lg leading-loose text-gray-700 text-left fade-in-section">
+                <p>ひどい風に当たって、ばらばらに散ってしまう露にも一筋の美しさを見出す。この歌の持つ視点に惹かれ、古典籍を重点的に扱いたいという想いとともに文庫名に冠しました。</p>
+                <p>また、この歌では「白露」を「玉（宝石）」に例えています。<br>どんな些細な本も、読み手にとっては玉。そんな本を一つ一つ丁寧に並べて、皆様の元へお届けしたいと願っています。</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Noteへの誘導セクション -->
+    <section id="note" class="py-24 md:py-32 px-6">
+        <div class="max-w-3xl mx-auto text-center fade-in-section">
+            <h2 class="text-2xl md:text-3xl font-semibold tracking-widest mb-8">日々の綴り</h2>
+            <p class="mb-12 leading-loose text-gray-700">
+                日々の活動や、入荷した書籍のこと、本にまつわる想いなどは<br class="hidden md:block">noteにて定期的に綴っております。ぜひご覧ください。
+            </p>
+            <a href="https://note.com/shiratuyu_bunko" target="_blank" rel="noopener noreferrer" class="inline-block px-12 py-4 border border-sumi text-sumi hover:bg-sumi hover:text-white transition-colors duration-300 tracking-widest text-lg">
+                Noteを読む
+            </a>
+        </div>
+    </section>
+
+    <!-- フッター -->
+    <footer class="bg-sumi text-washi py-12 px-6">
+        <div class="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center text-sm tracking-widest">
+            <div class="mb-6 md:mb-0">
+                <span class="text-xl font-semibold">白露文庫</span>
+            </div>
+            <div class="flex space-x-6 text-gray-400">
+                <a href="https://note.com/shiratuyu_bunko" class="hover:text-washi transition-colors">Note</a>
+            </div>
+        </div>
+        <div class="text-center text-gray-500 mt-12 text-xs tracking-widest">
+            &copy; 2026 白露文庫 All Rights Reserved.
+        </div>
+    </footer>
+
+    <!-- スクロールアニメーション用のJavaScript -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.15
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+
+            const sections = document.querySelectorAll('.fade-in-section');
+            sections.forEach(section => {
+                observer.observe(section);
+            });
+        });
+    </script>
+</body>
+</html>
