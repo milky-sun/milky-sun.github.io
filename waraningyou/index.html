@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0d0b0c">
+<meta name="description" content="呪詛之間 — 藁人形で気を晴らすための一枚もの。名前も写真も端末の外には出ません。">
+<meta name="robots" content="noindex, nofollow">
+<title>呪詛之間</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🕯️</text></svg>">
+<meta property="og:title" content="呪詛之間">
+<meta property="og:description" content="端末の中だけで完結する、気を晴らすための一枚。">
+<!-- OGP の画像とURLは絶対パスでないと SNS 側が読めない -->
+<meta property="og:url" content="https://milky-sun.github.io/waraningyou/">
+<meta property="og:image" content="https://milky-sun.github.io/waraningyou/assets/img/ogp.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="./styles/style.css">
+</head>
+<body>
+
+<!-- ============ 音量トグル（常時表示） ============ -->
+<button id="sound-toggle" class="sound-toggle" type="button" aria-pressed="false" aria-label="音を出す">
+  <span class="sound-toggle__icon" aria-hidden="true">🔇</span>
+</button>
+
+<!-- ============ 画面1: 支度 ============ -->
+<section id="scene-setup" class="scene scene--active" aria-label="支度">
+  <div class="setup">
+    <header class="setup__head">
+      <p class="setup__kicker">呪詛之間</p>
+      <h1 class="setup__title">藁人形を、<br>こしらえる。</h1>
+      <p class="setup__note">
+        入力した名前も写真も、<strong>この端末の中だけ</strong>で処理されます。<br>
+        どこにも送信しません。タブを閉じれば消えます。
+      </p>
+    </header>
+
+    <div class="field">
+      <label class="field__label" for="input-name">一、名を書く</label>
+      <input id="input-name" class="field__input" type="text" maxlength="24"
+             placeholder="呪う相手の名" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <p class="field__hint">空でも構いません。「名も無き者」として扱われます。</p>
+    </div>
+
+    <div class="field">
+      <span class="field__label">二、顔をつくる</span>
+      <div class="facemode" role="radiogroup" aria-label="顔の作り方">
+        <button class="facemode__btn facemode__btn--on" type="button" data-facemode="none" role="radio" aria-checked="true">のっぺらぼう</button>
+        <button class="facemode__btn" type="button" data-facemode="draw"  role="radio" aria-checked="false">自分で描く</button>
+        <button class="facemode__btn" type="button" data-facemode="photo" role="radio" aria-checked="false">写真を使う</button>
+      </div>
+
+      <!-- 描く -->
+      <div id="pane-draw" class="pane" hidden>
+        <div class="paint">
+          <canvas id="paint-canvas" class="paint__canvas" width="512" height="512"
+                  aria-label="顔を描くキャンバス"></canvas>
+          <div class="paint__ring" aria-hidden="true"></div>
+        </div>
+        <div class="paint__tools">
+          <div id="paint-palette" class="palette" role="radiogroup" aria-label="色"></div>
+          <div class="paint__row">
+            <div class="sizes" role="radiogroup" aria-label="線の太さ">
+              <button class="size__btn" type="button" data-size="6"  role="radio" aria-checked="false"><i style="width:6px;height:6px"></i></button>
+              <button class="size__btn size__btn--on" type="button" data-size="14" role="radio" aria-checked="true"><i style="width:12px;height:12px"></i></button>
+              <button class="size__btn" type="button" data-size="30" role="radio" aria-checked="false"><i style="width:20px;height:20px"></i></button>
+            </div>
+            <button id="paint-erase" class="mini-btn" type="button" aria-pressed="false">消しゴム</button>
+            <button id="paint-clear" class="mini-btn" type="button">全消し</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 写真 -->
+      <div id="pane-photo" class="pane" hidden>
+        <div class="photo">
+          <canvas id="photo-canvas" class="photo__canvas" width="512" height="512"
+                  aria-label="写真のプレビュー。ドラッグで位置を調整できます。"></canvas>
+          <div class="paint__ring" aria-hidden="true"></div>
+          <p id="photo-empty" class="photo__empty">写真を選んでください</p>
+        </div>
+        <div class="photo__tools">
+          <label class="file-btn">
+            写真を選ぶ
+            <input id="input-photo" type="file" accept="image/*" hidden>
+          </label>
+          <label class="slider">
+            <span>大きさ</span>
+            <input id="photo-zoom" type="range" min="100" max="300" value="130" step="1">
+          </label>
+          <p class="field__hint">円の中をドラッグすると位置を動かせます。</p>
+        </div>
+      </div>
+    </div>
+
+    <button id="btn-create" class="big-btn" type="button">藁人形に魂を入れる</button>
+    <p class="setup__foot">※ これは気を晴らすための遊びです。実在の相手に何かをするためのものではありません。</p>
+  </div>
+</section>
+
+<!-- ============ 画面2: 呪詛之間 ============ -->
+<section id="scene-main" class="scene" aria-label="呪詛之間" hidden>
+  <header class="hud">
+    <div class="hud__name">
+      <span class="hud__label">呪う相手</span>
+      <strong id="hud-target">名も無き者</strong>
+    </div>
+    <div class="life" aria-live="polite">
+      <span class="life__label">余　命</span>
+      <output id="life-left" class="life__value">43年</output>
+      <span id="life-drained" class="life__drained">削った寿命 0日</span>
+    </div>
+  </header>
+
+  <div class="stage">
+    <div id="stage-inner" class="stage__inner">
+      <div id="doll-host" class="doll-host"></div>
+      <canvas id="acid-canvas" class="acid-canvas" aria-hidden="true"></canvas>
+      <canvas id="fx-canvas" class="fx-canvas" aria-hidden="true"></canvas>
+      <div id="combo" class="combo" hidden aria-hidden="true"><span id="combo-n">0</span> HIT</div>
+      <div id="drain-layer" class="drain-layer" aria-hidden="true"></div>
+    </div>
+    <p id="mode-tip" class="mode-tip"></p>
+  </div>
+
+  <nav class="tools" aria-label="道具">
+    <button class="tool" type="button" data-tool="curse"  aria-pressed="false"><span class="tool__ico" data-ico="curse" aria-hidden="true"></span><span class="tool__txt">呪をかける</span></button>
+    <button class="tool" type="button" data-tool="needle" aria-pressed="false"><span class="tool__ico" data-ico="needle" aria-hidden="true"></span><span class="tool__txt">針で刺す</span></button>
+    <button class="tool" type="button" data-tool="punch"  aria-pressed="false"><span class="tool__ico" data-ico="punch" aria-hidden="true"></span><span class="tool__txt">ボコボコ</span></button>
+    <button class="tool" type="button" data-tool="acid"   aria-pressed="false"><span class="tool__ico" data-ico="acid" aria-hidden="true"></span><span class="tool__txt">酸をかける</span></button>
+    <button class="tool tool--fire" type="button" data-tool="burn" aria-pressed="false"><span class="tool__ico" data-ico="burn" aria-hidden="true"></span><span class="tool__txt">燃やす</span></button>
+  </nav>
+
+  <button id="btn-log" class="log-open" type="button">呪詛帳を見る</button>
+
+  <!-- チャージリング（呪をかける） -->
+  <div id="charge" class="charge" hidden aria-hidden="true">
+    <svg viewBox="0 0 200 200" class="charge__svg">
+      <circle class="charge__track" cx="100" cy="100" r="88"></circle>
+      <circle id="charge-arc" class="charge__arc" cx="100" cy="100" r="88"></circle>
+    </svg>
+    <div class="charge__rank"><span id="charge-rank">凶を溜める</span></div>
+  </div>
+
+  <!-- 寿命が尽きた瞬間の口上 -->
+  <div id="expire" class="expire" hidden aria-hidden="true">
+    <p class="expire__line">寿命が尽きた。</p>
+    <p class="expire__sub">それでも、まだ刺せる。</p>
+  </div>
+
+  <!-- 呪詛の結果 -->
+  <div id="result" class="result" hidden role="dialog" aria-modal="true" aria-labelledby="result-lead">
+    <div class="result__card">
+      <p id="result-rank" class="result__rank">凶</p>
+      <p id="result-lead" class="result__lead"></p>
+      <p id="result-body" class="result__body"></p>
+      <button id="result-close" class="result__close" type="button">閉じる</button>
+    </div>
+  </div>
+
+  <!-- 呪詛帳 -->
+  <div id="logbook" class="logbook" hidden role="dialog" aria-modal="true" aria-labelledby="logbook-title">
+    <div class="logbook__card">
+      <h2 id="logbook-title" class="logbook__title">呪詛帳</h2>
+      <ol id="logbook-list" class="logbook__list"></ol>
+      <p id="logbook-empty" class="logbook__empty">まだ何も起きていません。</p>
+      <button id="logbook-close" class="result__close" type="button">閉じる</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 画面3: 燼 ============ -->
+<section id="scene-ashes" class="scene scene--ashes" aria-label="燼" hidden>
+  <div class="ashes">
+    <canvas id="ash-canvas" class="ashes__canvas" aria-hidden="true"></canvas>
+    <div class="ashes__inner">
+      <p class="ashes__kicker">燼</p>
+      <p id="ashes-name" class="ashes__name"></p>
+      <dl id="ashes-stats" class="ashes__stats"></dl>
+      <button id="btn-restart" class="ghost-btn" type="button">新しい藁人形を作る</button>
+    </div>
+  </div>
+</section>
+
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
